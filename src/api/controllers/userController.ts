@@ -95,6 +95,8 @@ const userPut = async (
     if (user.password) {
       user.password = await bcrypt.hash(user.password, salt);
     }
+
+    console.log(userFromToken.id, req.body);
     const result = await userModel
       .findByIdAndUpdate(userFromToken.id, user, {
         new: true,
@@ -176,8 +178,6 @@ const checkToken = async (req: Request, res: Response, next: NextFunction) => {
 
   const newToken = jwt.sign(
     {
-      user_name: user.user_name,
-      email: user.email,
       id: user._id,
     },
     process.env.JWT_SECRET as string
@@ -187,15 +187,7 @@ const checkToken = async (req: Request, res: Response, next: NextFunction) => {
     message: 'Token is valid',
     token: newToken,
   };
-  res.json({message: 'Token is valid'});
+  res.json(message);
 };
 
-export default {
-  check,
-  userListGet,
-  userGet,
-  userPost,
-  userPut,
-  userDelete,
-  checkToken,
-};
+export {check, userListGet, userGet, userPost, userPut, userDelete, checkToken};

@@ -68,7 +68,7 @@ const userPost = async (
     };
     res.json(response);
   } catch (error) {
-    next(new CustomError((error as Error).message, 500));
+    next(new CustomError('Duplicate entry', 200));
   }
 };
 

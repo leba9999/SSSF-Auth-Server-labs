@@ -74,38 +74,28 @@ const userPost = async (
 
 const userPut = async (
   req: Request<{}, {}, User>,
-  res: Response,
+  res: Response<{}, {user: OutputUser}>,
   next: NextFunction
 ) => {
   try {
-    const headers = req.headers;
-    const bearer = headers.authorization;
-    if (!bearer) {
-      next(new CustomError('No token provided', 401));
-      return;
-    }
-    const token = bearer.split(' ')[1];
-
-    const userFromToken = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as OutputUser;
+    const userFromToken = res.locals.user;
 
     const user = req.body;
     if (user.password) {
       user.password = await bcrypt.hash(user.password, salt);
     }
 
-    console.log(userFromToken.id, req.body);
     const result = await userModel
       .findByIdAndUpdate(userFromToken.id, user, {
         new: true,
       })
       .select('-password -role');
+
     if (!result) {
       next(new CustomError('User not found', 404));
       return;
     }
+
     const response: DBMessageResponse = {
       message: 'user updated',
       user: {
@@ -120,20 +110,13 @@ const userPut = async (
   }
 };
 
-const userDelete = async (req: Request, res: Response, next: NextFunction) => {
+const userDelete = async (
+  req: Request,
+  res: Response<{}, {user: OutputUser}>,
+  next: NextFunction
+) => {
   try {
-    const headers = req.headers;
-    const bearer = headers.authorization;
-    if (!bearer) {
-      next(new CustomError('No token provided', 401));
-      return;
-    }
-    const token = bearer.split(' ')[1];
-
-    const userFromToken = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as OutputUser;
+    const userFromToken = res.locals.user;
 
     const result = await userModel.findByIdAndDelete(userFromToken.id);
     if (!result) {
@@ -154,38 +137,16 @@ const userDelete = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const checkToken = async (req: Request, res: Response, next: NextFunction) => {
-  const headers = req.headers;
-  const bearer = headers.authorization;
-  if (!bearer) {
-    next(new CustomError('No token provided', 401));
-    return;
-  }
-  const token = bearer.split(' ')[1];
-  const userFromToken = jwt.verify(
-    token,
-    process.env.JWT_SECRET as string
-  ) as OutputUser;
+const checkToken = async (
+  req: Request,
+  res: Response<{}, {user: OutputUser}>,
+  next: NextFunction
+) => {
+  const userFromToken = res.locals.user;
 
-  const user = await userModel
-    .findById(userFromToken.id)
-    .select('-password -role');
-
-  if (!user) {
-    next(new CustomError('Token not valid', 404));
-    return;
-  }
-
-  const newToken = jwt.sign(
-    {
-      id: user._id,
-    },
-    process.env.JWT_SECRET as string
-  );
-
-  const message: LoginMessageResponse = {
+  const message: DBMessageResponse = {
     message: 'Token is valid',
-    token: newToken,
+    user: userFromToken,
   };
   res.json(message);
 };

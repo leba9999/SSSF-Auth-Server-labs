@@ -6,6 +6,7 @@ import {NextFunction, Request, Response} from 'express';
 import userModel from '../models/userModel';
 import CustomError from '../../classes/CustomError';
 import LoginMessageResponse from '../../interfaces/LoginMessageResponse';
+import {OutputUser} from '../../interfaces/User';
 
 const login = async (
   req: Request<{}, {}, {username: string; password: string}>,
@@ -27,9 +28,16 @@ const login = async (
 
     const token = jwt.sign({id: user._id}, process.env.JWT_SECRET as string);
 
+    const outputUser: OutputUser = {
+      user_name: user.user_name,
+      email: user.email,
+      id: user._id,
+    };
+
     const message: LoginMessageResponse = {
       message: 'Login successful',
       token,
+      user: outputUser,
     };
 
     res.json(message);

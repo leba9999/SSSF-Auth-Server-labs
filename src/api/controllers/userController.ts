@@ -118,6 +118,7 @@ const userDelete = async (
 ) => {
   try {
     const userFromToken = res.locals.user;
+    console.log('user from token', userFromToken);
 
     const result = await userModel.findByIdAndDelete(userFromToken.id);
     if (!result) {

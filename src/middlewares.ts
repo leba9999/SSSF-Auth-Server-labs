@@ -60,6 +60,7 @@ const authenticate = async (
       id: user._id,
       email: user.email,
       user_name: user.user_name,
+      role: user.role,
     };
 
     res.locals.user = outputUser;

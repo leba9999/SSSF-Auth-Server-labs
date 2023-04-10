@@ -49,9 +49,7 @@ const authenticate = async (
       process.env.JWT_SECRET as string
     ) as OutputUser;
 
-    const user = await userModel
-      .findById(userFromToken.id)
-      .select('-password -role');
+    const user = await userModel.findById(userFromToken.id).select('-password');
 
     if (!user) {
       next(new CustomError('Token not valid', 403));

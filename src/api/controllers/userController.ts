@@ -42,6 +42,7 @@ const userGet = async (
       .select('-password -role');
     if (!user) {
       next(new CustomError('User not found', 404));
+      return;
     }
     res.json(user);
   } catch (error) {
@@ -137,6 +138,75 @@ const userDelete = async (
   }
 };
 
+const userPutAsAdmin = async (
+  req: Request<{}, {}, User>,
+  res: Response<{}, {user: OutputUser}>,
+  next: NextFunction
+) => {
+  try {
+    if (res.locals.user.role !== 'admin') {
+      next(new CustomError('You are not authorized to do this', 401));
+      return;
+    }
+    const user = req.body;
+    if (user.password) {
+      user.password = await bcrypt.hash(user.password, salt);
+    }
+
+    const result = await userModel
+      .findByIdAndUpdate(user.id, user, {
+        new: true,
+      })
+      .select('-password -role');
+
+    if (!result) {
+      next(new CustomError('User not found', 404));
+      return;
+    }
+
+    const response: DBMessageResponse = {
+      message: 'user updated',
+      user: {
+        user_name: result.user_name,
+        email: result.email,
+        id: result._id,
+      },
+    };
+    res.json(response);
+  } catch (error) {
+    next(new CustomError((error as Error).message, 500));
+  }
+};
+
+const userDeleteAsAdmin = async (
+  req: Request,
+  res: Response<{}, {user: OutputUser}>,
+  next: NextFunction
+) => {
+  try {
+    if (res.locals.user.role !== 'admin') {
+      next(new CustomError('You are not authorized to do this', 401));
+      return;
+    }
+    const result = await userModel.findByIdAndDelete(req.params.id);
+    if (!result) {
+      next(new CustomError('User not found', 404));
+      return;
+    }
+    const response: DBMessageResponse = {
+      message: 'user deleted',
+      user: {
+        user_name: result.user_name,
+        email: result.email,
+        id: result._id,
+      },
+    };
+    res.json(response);
+  } catch (error) {
+    next(new CustomError((error as Error).message, 500));
+  }
+};
+
 const checkToken = async (
   req: Request,
   res: Response<{}, {user: OutputUser}>,
@@ -151,4 +221,14 @@ const checkToken = async (
   res.json(message);
 };
 
-export {check, userListGet, userGet, userPost, userPut, userDelete, checkToken};
+export {
+  check,
+  userListGet,
+  userGet,
+  userPost,
+  userPut,
+  userDelete,
+  userPutAsAdmin,
+  userDeleteAsAdmin,
+  checkToken,
+};

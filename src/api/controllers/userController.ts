@@ -86,6 +86,8 @@ const userPut = async (
       user.password = await bcrypt.hash(user.password, salt);
     }
 
+    console.log('userPut', userFromToken, user);
+
     const result = await userModel
       .findByIdAndUpdate(userFromToken.id, user, {
         new: true,
@@ -96,6 +98,8 @@ const userPut = async (
       next(new CustomError('User not found', 404));
       return;
     }
+
+    console.log('put result', result);
 
     const response: DBMessageResponse = {
       message: 'user updated',

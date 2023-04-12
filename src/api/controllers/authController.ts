@@ -13,8 +13,8 @@ const login = async (
   res: Response,
   next: NextFunction
 ) => {
-  const {username, password} = req.body;
   try {
+    const {username, password} = req.body;
     const user = await userModel.findOne({email: username});
     if (!user) {
       next(new CustomError('Incorrect username/password', 200));
